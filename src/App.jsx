@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import MapView from './components/MapView'
 import ShopDetail from './components/ShopDetail'
 import { INITIAL_SHOPS } from './initialData'
+import { calculateAverageRating } from './utils'
 import './App.css'
 
 function App() {
@@ -16,16 +17,11 @@ function App() {
   );
 
   const sortedShops = useMemo(() => {
-    const getAverageRating = (ratings) => {
-      if (ratings.length === 0) return 0;
-      return ratings.reduce((acc, r) => acc + r.stars, 0) / ratings.length;
-    };
-
     return [...shops].sort((a, b) => {
       if (sortOrder.type === 'alpha') {
         return a.name.localeCompare(b.name);
       } else {
-        return getAverageRating(b.ratings) - getAverageRating(a.ratings);
+        return calculateAverageRating(b.ratings) - calculateAverageRating(a.ratings);
       }
     });
   }, [shops, sortOrder]);

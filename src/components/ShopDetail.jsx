@@ -1,16 +1,11 @@
 import React, { useState } from 'react';
 import { Star, Plus } from 'lucide-react';
+import { calculateAverageRating } from '../utils';
 
 const ShopDetail = ({ shop, onAddRating, onAddShop }) => {
   const [isAddingShop, setIsAddingShop] = useState(false);
   const [newShop, setNewShop] = useState({ name: '', lat: '', lng: '' });
   const [newRating, setNewRating] = useState({ username: '', stars: 5 });
-
-  const getAverageRating = (ratings) => {
-    if (ratings.length === 0) return 0;
-    const sum = ratings.reduce((acc, r) => acc + r.stars, 0);
-    return (sum / ratings.length).toFixed(1);
-  };
 
   const handleRatingSubmit = (e) => {
     e.preventDefault();
@@ -89,7 +84,7 @@ const ShopDetail = ({ shop, onAddRating, onAddShop }) => {
           <div className="detail-header">
             <h2>{shop.name}</h2>
             <div className="avg-badge">
-              <Star size={20} fill="currentColor" /> {getAverageRating(shop.ratings)}
+              <Star size={20} fill="currentColor" /> {calculateAverageRating(shop.ratings)}
             </div>
             <button className="btn-add-mini" onClick={() => setIsAddingShop(true)} title="Add New Shop">
                 <Plus size={16} />
