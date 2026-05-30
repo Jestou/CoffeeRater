@@ -12,18 +12,28 @@ A web application to rate coffee shops in your area.
 
 ## How to Run
 
-1. **Install Dependencies:**
-   ```bash
-   npm install
-   ```
+### 1. Install Dependencies
+Before running the app for the first time, you need to install the required packages:
+```bash
+npm install
+```
 
-2. **Start the Development Server:**
-   ```bash
-   npm run dev
-   ```
+### 2. Start the Development Server
+To start the web server in development mode, run:
+```bash
+npm run dev
+```
 
-3. **Open the App:**
-   The app will be running at `http://localhost:5173/`. Open this URL in your web browser.
+### 3. Access the Application
+Once the server is running, you can access the app by navigating to the following URL in your web browser:
+[http://localhost:5173/](http://localhost:5173/)
+
+### 4. Build for Production (Optional)
+To create a production-ready build, use:
+```bash
+npm run build
+```
+The output will be in the `dist/` directory.
 
 ## Technologies Used
 
