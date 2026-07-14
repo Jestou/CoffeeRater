@@ -1,137 +1,212 @@
 import React, { useState } from 'react';
-import { Star, Plus } from 'lucide-react';
-import { calculateAverageRating } from '../utils';
+import { Coffee, DollarSign, RefreshCw, Compass, MapPin, Clock } from 'lucide-react';
 
-const ShopDetail = ({ shop, onAddRating, onAddShop }) => {
-  const [isAddingShop, setIsAddingShop] = useState(false);
-  const [newShop, setNewShop] = useState({ name: '', lat: '', lng: '' });
-  const [newRating, setNewRating] = useState({ username: '', stars: 5 });
+const ShopDetail = ({ shop, onAddRating }) => {
+  const [coffeeRating, setCoffeeRating] = useState(5);
+  const [priceRating, setPriceRating] = useState(3);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRatingSubmit = (e) => {
+  if (!shop) {
+    return (
+      <div className="detail-panel">
+        <div className="empty-state">
+          <Compass size={56} className="empty-state-icon" />
+          <p>Select a coffee shop from the list or search above to rate and review!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleRatingSubmit = async (e) => {
     e.preventDefault();
-    if (!newRating.username || !newRating.stars) return;
-    onAddRating(shop.id, {
-      id: Date.now().toString(),
-      username: newRating.username,
-      stars: parseInt(newRating.stars)
-    });
-    setNewRating({ username: '', stars: 5 });
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/shops/${shop.id}/ratings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          coffee_rating: coffeeRating,
+          price_rating: priceRating,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedShop = await response.json();
+        onAddRating(updatedShop);
+      }
+    } catch (err) {
+      console.error('Error adding rating:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleShopSubmit = (e) => {
-    e.preventDefault();
-    if (!newShop.name || !newShop.lat || !newShop.lng) return;
-    onAddShop({
-      id: Date.now().toString(),
-      name: newShop.name,
-      location: { lat: parseFloat(newShop.lat), lng: parseFloat(newShop.lng) },
-      ratings: []
-    });
-    setNewShop({ name: '', lat: '', lng: '' });
-    setIsAddingShop(false);
+  // Helper to render coffee symbols ☕
+  const renderCoffeeSymbols = (rating) => {
+    if (rating === 0) return <span className="stats-value" style={{opacity: 0.6}}>No ratings yet</span>;
+    return (
+      <div className="stats-value">
+        {[...Array(5)].map((_, i) => (
+          <span
+            key={i}
+            className={i < Math.round(rating) ? 'symbol-filled' : 'symbol-empty'}
+            style={{ marginRight: '2px' }}
+          >
+            ☕
+          </span>
+        ))}
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 'bold' }}>
+          ({rating})
+        </span>
+      </div>
+    );
+  };
+
+  // Helper to render price symbols $
+  const renderPriceSymbols = (rating) => {
+    if (rating === 0) return <span className="stats-value" style={{opacity: 0.6}}>No ratings yet</span>;
+    return (
+      <div className="stats-value" style={{ color: '#2E7D32' }}>
+        {[...Array(5)].map((_, i) => (
+          <span
+            key={i}
+            className={i < Math.round(rating) ? '' : 'symbol-empty'}
+            style={{ marginRight: '2px', fontWeight: '900' }}
+          >
+            $
+          </span>
+        ))}
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '6px', fontWeight: 'bold' }}>
+          ({rating})
+        </span>
+      </div>
+    );
   };
 
   return (
     <div className="detail-panel">
-      {!isAddingShop && !shop && (
-        <div className="empty-state">
-          <p>Select a coffee shop or add a new one.</p>
-          <button className="btn-primary" onClick={() => setIsAddingShop(true)}>
-            <Plus size={18} /> Add Coffee Shop
-          </button>
-        </div>
-      )}
-
-      {isAddingShop && (
-        <div className="form-container">
-          <h3>Add New Coffee Shop</h3>
-          <form onSubmit={handleShopSubmit}>
-            <input
-              type="text"
-              placeholder="Shop Name"
-              value={newShop.name}
-              onChange={(e) => setNewShop({ ...newShop, name: e.target.value })}
-              required
-            />
-            <div className="coord-inputs">
-              <input
-                type="number"
-                step="any"
-                placeholder="Latitude"
-                value={newShop.lat}
-                onChange={(e) => setNewShop({ ...newShop, lat: e.target.value })}
-                required
-              />
-              <input
-                type="number"
-                step="any"
-                placeholder="Longitude"
-                value={newShop.lng}
-                onChange={(e) => setNewShop({ ...newShop, lng: e.target.value })}
-                required
-              />
-            </div>
-            <div className="button-group">
-              <button type="submit" className="btn-primary">Add Shop</button>
-              <button type="button" className="btn-secondary" onClick={() => setIsAddingShop(false)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {!isAddingShop && shop && (
-        <div className="shop-details">
-          <div className="detail-header">
+      <div className="shop-details">
+        {/* Header Section */}
+        <div className="detail-header">
+          <div className="detail-title-section">
             <h2>{shop.name}</h2>
-            <div className="avg-badge">
-              <Star size={20} fill="currentColor" /> {calculateAverageRating(shop.ratings)}
+            <div className="detail-location-meta">
+              <span className="meta-item">
+                <MapPin size={16} />
+                {shop.distance < 1000 ? `${shop.distance}m` : `${(shop.distance / 1000).toFixed(1)}km`} from 123 Albert St
+              </span>
+              <span className="meta-item">
+                <Clock size={16} />
+                {shop.walkingTime} min walk
+              </span>
             </div>
-            <button className="btn-add-mini" onClick={() => setIsAddingShop(true)} title="Add New Shop">
-                <Plus size={16} />
-            </button>
+          </div>
+          <div className="score-hero-container">
+            <div className="score-hero-card duo-card">
+              <div className="score-hero-val">{shop.compositeScore}</div>
+              <div className="score-hero-label">Value Score</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Details & Submission Grid */}
+        <div className="detail-grid">
+          {/* Left Panel: Statistics */}
+          <div className="stats-card duo-card">
+            <h3 className="stats-title">Performance Stats</h3>
+
+            <div className="stats-row">
+              <span className="stats-label">Coffee Quality</span>
+              {renderCoffeeSymbols(shop.avgCoffee)}
+            </div>
+
+            <div className="stats-row">
+              <span className="stats-label">Price Rating</span>
+              {renderPriceSymbols(shop.avgPrice)}
+            </div>
+
+            <div className="stats-row">
+              <span className="stats-label">Distance to Shop</span>
+              <span className="stats-value" style={{ color: 'var(--text-main)' }}>
+                {shop.distance} meters
+              </span>
+            </div>
+
+            <div className="stats-row">
+              <span className="stats-label">Walking Duration</span>
+              <span className="stats-value" style={{ color: 'var(--text-main)' }}>
+                ~ {shop.walkingTime} minutes
+              </span>
+            </div>
+
+            <div className="stats-row">
+              <span className="stats-label">Total Visits Rated</span>
+              <span className="stats-value" style={{ color: 'var(--text-main)' }}>
+                {shop.ratingsCount} visits
+              </span>
+            </div>
           </div>
 
-          <div className="ratings-section">
-            <h3>Reviews</h3>
-            <ul className="rating-list">
-              {shop.ratings.map(r => (
-                <li key={r.id} className="rating-item">
-                  <div className="rating-stars">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill={i < r.stars ? "currentColor" : "none"} color="currentColor" />
-                    ))}
-                  </div>
-                  <span className="rating-user">by {r.username}</span>
-                </li>
-              ))}
-              {shop.ratings.length === 0 && <p className="no-ratings">No reviews yet.</p>}
-            </ul>
-          </div>
-
-          <div className="add-rating-form">
-            <h3>Add your review</h3>
+          {/* Right Panel: Add Rating Visit */}
+          <div className="rating-form-card duo-card">
+            <h3>Log Coffee Visit</h3>
             <form onSubmit={handleRatingSubmit}>
-              <input
-                type="text"
-                placeholder="Your Username"
-                value={newRating.username}
-                onChange={(e) => setNewRating({ ...newRating, username: e.target.value })}
-                required
-              />
-              <div className="star-select">
-                <label>Rating: </label>
-                <select
-                  value={newRating.stars}
-                  onChange={(e) => setNewRating({ ...newRating, stars: e.target.value })}
-                >
-                  {[5, 4, 3, 2, 1].map(n => <option key={n} value={n}>{n} Stars</option>)}
-                </select>
+              <div className="form-group">
+                <label>Coffee Quality (☕)</label>
+                <div className="symbol-selector-group">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`symbol-selector-btn symbol-selector-btn-coffee ${
+                        coffeeRating === val ? 'active' : ''
+                      }`}
+                      onClick={() => setCoffeeRating(val)}
+                    >
+                      ☕
+                    </button>
+                  ))}
+                </div>
               </div>
-              <button type="submit" className="btn-primary">Submit Review</button>
+
+              <div className="form-group">
+                <label>Price Tier ($)</label>
+                <div className="symbol-selector-group">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`symbol-selector-btn symbol-selector-btn-price ${
+                        priceRating === val ? 'active' : ''
+                      }`}
+                      onClick={() => setPriceRating(val)}
+                    >
+                      $
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="duo-btn-primary"
+                style={{ marginTop: '10px' }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="loader-mini" style={{ position: 'static' }} /> Saving Rating...
+                  </>
+                ) : (
+                  'Submit Visit Rating'
+                )}
+              </button>
             </form>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
