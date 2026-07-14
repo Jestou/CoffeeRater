@@ -11,7 +11,7 @@ async def verify():
         max_retries = 10
         for i in range(max_retries):
             try:
-                await page.goto("http://localhost:5173/")
+                await page.goto("http://localhost:3001/")
                 break
             except Exception:
                 if i == max_retries - 1:
@@ -24,19 +24,22 @@ async def verify():
         await page.screenshot(path="verification/initial_load.png")
         print("Captured initial_load.png")
 
-        # Select a shop
-        await page.click("text=Coffee Central")
-        await page.wait_for_selector("text=Reviews")
+        # Select a shop: "Merlo Coffee Cafe - George St"
+        await page.click("text=Merlo Coffee Cafe - George St")
+        await page.wait_for_selector("text=Performance Stats")
         await page.screenshot(path="verification/selected_shop.png")
         print("Captured selected_shop.png")
 
-        # Add a rating
-        await page.fill('input[placeholder="Your Username"]', 'testuser')
-        await page.select_option('select', '5')
-        await page.click("text=Submit Review")
+        # Submit a rating: Select Coffee 4
+        await page.locator('.symbol-selector-btn-coffee').nth(3).click()
+        # Select Price 2
+        await page.locator('.symbol-selector-btn-price').nth(1).click()
 
-        # Check if the new rating is there (username "by testuser")
-        await page.wait_for_selector("text=by testuser")
+        # Click "Submit Visit Rating"
+        await page.click("text=Submit Visit Rating")
+
+        # Check if the total visits rated increments to 3 visits
+        await page.wait_for_selector("text=3 visits")
         await page.screenshot(path="verification/added_rating.png")
         print("Captured added_rating.png")
 
